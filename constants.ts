@@ -4,29 +4,27 @@ import { LiFiDiamond as BaseDiamond } from './deployments/base.staging.json';
 export const getDiamondAddress = (chainId: CHAIN_IDS) => {
   switch (chainId) {
     case CHAIN_IDS.ARBITRUM:
-      return 'not deployed';
+      return '0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE';
     case CHAIN_IDS.BASE:
-      return BaseDiamond;
+      return '0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE';
     case CHAIN_IDS.ETHEREUM:
-      return 'not deployed';
+      return '0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE';
     case CHAIN_IDS.BASE:
-      return BaseDiamond;
-    case CHAIN_IDS.ARBITRUM:
-      return 'not deployed';
+      return '0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE';
     case CHAIN_IDS.BSC:
-      return 'not deployed';
+      return '0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE';
     case CHAIN_IDS.POLYGON:
-      return 'not deployed';
+      return '0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE';
     case CHAIN_IDS.MANTLE:
-      return 'not deployed';
+      return '0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE';
     case CHAIN_IDS.METIS:
-      return 'not deployed';
+      return '0x24ca98fB6972F5eE05f0dB00595c7f68D9FaFd68';
     case CHAIN_IDS.SEI:
-      return 'not deployed';
+      return '0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE';
     case CHAIN_IDS.LINEA:
-      return 'not deployed';
+      return '0xDE1E598b81620773454588B85D6b5D4eEC32573e';
     case CHAIN_IDS.OPTIMISM:
-      return 'not deployed';
+      return '0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE';
     default:
       throw new Error(`Unsupported chainId: ${chainId}`);
   }

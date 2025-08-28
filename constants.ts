@@ -27,7 +27,7 @@ export const ADDRESS_UNISWAP_ARB = '0x4752ba5dbc23f44d87826276bf6fd6b1c372ad24'
 export const getDiamondAddress = (chainId: CHAIN_IDS) => {
   switch (chainId) {
     case CHAIN_IDS.ARBITRUM:
-      return '0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE';
+      return '0xc904ef055C81269ff474C60d8B7e7D44a301D19C';
     case CHAIN_IDS.BASE:
       return '0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE';
     case CHAIN_IDS.ETHEREUM:

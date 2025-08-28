@@ -15,6 +15,7 @@ import {
 import { ERC20__factory } from '../typechain'
 import type { LibSwap } from '../typechain/AcrossFacetV3'
 import { ADDRESS_WETH_OPT } from "@shared-contracts/constants"
+import { CHAIN_IDS } from "@shared-contracts/chainIds";
 
 export const getProvider = (
   networkName: string
@@ -389,4 +390,41 @@ export const getAmountsOutUniswap = async (
     console.error('Error calling Uniswap contract:', error)
     throw new Error(`Failed to get amounts out: ${error.message}`)
   }
+}
+
+export const USDC_ADDRESSES: Record<number, string> = {
+  [CHAIN_IDS.ETHEREUM]: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+  [CHAIN_IDS.POLYGON]: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',
+  [CHAIN_IDS.OPTIMISM]: '0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85',
+  [CHAIN_IDS.ARBITRUM]: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
+}
+
+export const WETH_ADDRESSES: Record<number, string> = {
+  [CHAIN_IDS.ETHEREUM]: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
+  [CHAIN_IDS.POLYGON]: '0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619',
+  [CHAIN_IDS.OPTIMISM]: '0x4200000000000000000000000000000000000006',
+  [CHAIN_IDS.ARBITRUM]: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
+}
+
+export const UNISWAP_ADDRESSES: Record<number, string> = {
+  [CHAIN_IDS.ETHEREUM]: '0x7a250d5630B4cF539739dF2c5dAcb4c659F2488D',
+  [CHAIN_IDS.BSC]: '0x4752ba5dbc23f44d87826276bf6fd6b1c372ad24',
+  [CHAIN_IDS.POLYGON]: '0xedf6066a2b290C185783862C7F4776A2C8077AD1',
+  [CHAIN_IDS.OPTIMISM]: '0x4A7b5Da61326A6379179b40d00F57E5bbDC962c2',
+  [CHAIN_IDS.ARBITRUM]: '0x4752ba5dbc23f44d87826276bf6fd6b1c372ad24',
+}
+
+export const getUSDC = (chainId: number): string => {
+  if (!USDC_ADDRESSES[chainId]) throw new Error(`No USDC for chainId ${chainId}`)
+  return USDC_ADDRESSES[chainId]
+}
+
+export const getWETH = (chainId: number): string => {
+  if (!WETH_ADDRESSES[chainId]) throw new Error(`No WETH for chainId ${chainId}`)
+  return WETH_ADDRESSES[chainId]
+}
+
+export const getUniswap = (chainId: number): string => {
+  if (!UNISWAP_ADDRESSES[chainId]) throw new Error(`No Uniswap for chainId ${chainId}`)
+  return UNISWAP_ADDRESSES[chainId]
 }

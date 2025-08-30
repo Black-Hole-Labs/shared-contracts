@@ -2,6 +2,7 @@ import * as networks from "../config/networks.json";
 
 import { BigNumber, constants, Contract, providers, Wallet } from 'ethers'
 import {
+  Address,
   createPublicClient,
   createWalletClient,
   formatEther,
@@ -43,6 +44,88 @@ const getProviderForChainId = (chainId: number) => {
   if (!provider)
     throw Error(`Could not find a provider for network ${networkName}`)
   else return provider
+}
+
+/**
+ * Executes a blockchain transaction, validates its receipt (optional), and handles errors.
+ */
+export const getUniswapDataExactETHToERC20 = async (
+  uniswapAddress: string,
+  chainId: number,
+  exactETHAmount: BigNumber,
+  sendingWETHid: string,
+  receivingAssetId: string,
+  receiverAddress: string,
+  requiresDeposit = false,
+  deadline = Math.floor(Date.now() / 1000) + 60 * 60
+) => {
+  const provider = getProviderForChainId(chainId)
+
+  const uniswap = new Contract(
+    uniswapAddress,
+    [
+      'function getAmountsOut(uint amountIn, address[] calldata path) external view returns (uint[] memory amounts)',
+      'function swapExactETHForTokens(uint amountOutMin, address[] calldata path, address to, uint deadline) external payable returns (uint[] memory amounts)',
+    ],
+    provider
+  ) as Contract & {
+    callStatic: {
+      getAmountsOut: (amountIn: string, path: string[]) => Promise<string[]>
+    }
+    populateTransaction: {
+      swapExactETHForTokens: (
+        amountOutMin: BigNumber,
+        path: string[],
+        to: string,
+        deadline: number
+      ) => Promise<{ data: string }>
+    }
+  }
+
+  const path = [sendingWETHid, receivingAssetId]
+
+  try {
+    // Get the expected output amount for the exact ETH input
+    const amounts = await uniswap.callStatic.getAmountsOut(
+      exactETHAmount.toString(),
+      path
+    )
+    const expectedOutput = amounts[1] as string
+    const minAmountOut = BigNumber.from(expectedOutput).mul(95).div(100) // 5% slippage tolerance
+
+    // console.log('Exact ETH input:', formatEther(exactETHAmount))
+    console.log('Expected USDC output:', formatUnits(BigInt(expectedOutput), 6))
+    console.log(
+      'Min USDC output with slippage:',
+      formatUnits(minAmountOut.toBigInt(), 6)
+    )
+
+    const uniswapCalldata = (
+      await uniswap.populateTransaction.swapExactETHForTokens(
+        minAmountOut,
+        path,
+        receiverAddress,
+        deadline
+      )
+    ).data
+
+    if (!uniswapCalldata) throw Error('Could not create Uniswap calldata')
+
+    const swapData: LibSwap.SwapDataStruct = {
+      callTo: uniswapAddress,
+      approveTo: uniswapAddress,
+      sendingAssetId: zeroAddress, // ETH,
+      receivingAssetId,
+      fromAmount: exactETHAmount,
+      callData: uniswapCalldata,
+      requiresDeposit,
+    }
+
+    return {...swapData, minAmountOut};
+  } catch (error) {
+    console.error('Error in Uniswap contract interaction:', error)
+    throw error
+  }
 }
 
 export const getUniswapSwapDataERC20ToERC20 = async (
@@ -119,7 +202,7 @@ export const getUniswapSwapDataERC20ToERC20 = async (
     requiresDeposit,
   }
 
-  return swapData
+  return {...swapData, finalMinAmountOut};
 }
 
 export const getUniswapDataERC20toExactETH = async (
@@ -394,22 +477,22 @@ export const getAmountsOutUniswap = async (
 
 export const USDC_ADDRESSES: Record<number, string> = {
   [CHAIN_IDS.ETHEREUM]: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-  [CHAIN_IDS.POLYGON]: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',
+  [CHAIN_IDS.POLYGON]:  '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',
   [CHAIN_IDS.OPTIMISM]: '0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85',
   [CHAIN_IDS.ARBITRUM]: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
 }
 
 export const WETH_ADDRESSES: Record<number, string> = {
   [CHAIN_IDS.ETHEREUM]: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
-  [CHAIN_IDS.POLYGON]: '0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619',
+  [CHAIN_IDS.POLYGON]:  '0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270', // WPOL
   [CHAIN_IDS.OPTIMISM]: '0x4200000000000000000000000000000000000006',
   [CHAIN_IDS.ARBITRUM]: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
 }
 
 export const UNISWAP_ADDRESSES: Record<number, string> = {
   [CHAIN_IDS.ETHEREUM]: '0x7a250d5630B4cF539739dF2c5dAcb4c659F2488D',
-  [CHAIN_IDS.BSC]: '0x4752ba5dbc23f44d87826276bf6fd6b1c372ad24',
-  [CHAIN_IDS.POLYGON]: '0xedf6066a2b290C185783862C7F4776A2C8077AD1',
+  [CHAIN_IDS.BSC]:      '0x4752ba5dbc23f44d87826276bf6fd6b1c372ad24',
+  [CHAIN_IDS.POLYGON]:  '0xedf6066a2b290C185783862C7F4776A2C8077AD1',
   [CHAIN_IDS.OPTIMISM]: '0x4A7b5Da61326A6379179b40d00F57E5bbDC962c2',
   [CHAIN_IDS.ARBITRUM]: '0x4752ba5dbc23f44d87826276bf6fd6b1c372ad24',
 }
@@ -427,4 +510,11 @@ export const getWETH = (chainId: number): string => {
 export const getUniswap = (chainId: number): string => {
   if (!UNISWAP_ADDRESSES[chainId]) throw new Error(`No Uniswap for chainId ${chainId}`)
   return UNISWAP_ADDRESSES[chainId]
+}
+
+/// @notice Determines whether the given assetId is the native asset
+/// @param assetId The asset identifier to evaluate
+/// @return Boolean indicating if the asset is the native asset
+export const isNativeAsset = (assetId: string): boolean => {
+    return assetId == constants.AddressZero;
 }
